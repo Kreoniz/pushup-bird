@@ -21,6 +21,7 @@ export class PushupBirdGame {
   private width = 0;
   private height = 0;
   private lastBird: ScreenPoint = { x: 0, y: 0 };
+  private lastGapZone = -1;
 
   constructor() {
     this.birdImage.src = new URL('assets/pushup-bird.svg', document.baseURI).href;
@@ -33,14 +34,15 @@ export class PushupBirdGame {
     this.running = false;
     this.gameOver = false;
     this.pipes = [];
+    this.lastGapZone = -1;
     this.lastBird = this.getBirdPoint(player);
   }
 
   start(): void {
     this.running = true;
     this.gameOver = false;
-    this.spawnPipe(this.lastBird.y, this.width * 0.78);
-    this.spawnPipe(this.lastBird.y, this.width * 1.42);
+    this.spawnPipe(this.width * 0.78, this.lastBird.y);
+    this.spawnPipe(this.width * 1.42);
   }
 
   update(deltaSeconds: number, player: ScreenPoint, tracking: boolean): GameFrame {
@@ -66,7 +68,7 @@ export class PushupBirdGame {
 
     const lastPipe = this.pipes.at(-1);
     if (!lastPipe || lastPipe.x < this.width - this.getSpawnDistance()) {
-      this.spawnPipe(this.lastBird.y);
+      this.spawnPipe();
     }
 
     if (this.collides(this.lastBird)) {
@@ -111,14 +113,38 @@ export class PushupBirdGame {
     this.height = height;
   }
 
-  private spawnPipe(targetY: number, x = this.width + this.getPipeWidth()): void {
+  private spawnPipe(
+    x = this.width + this.getPipeWidth(),
+    preferredCenter?: number,
+  ): void {
     const gapSize = this.getGapSize();
     const safeMargin = Math.max(72, this.height * 0.09);
     const minCenter = safeMargin + gapSize / 2;
     const maxCenter = this.height - safeMargin - gapSize / 2;
-    const travel = Math.max(100, this.height * 0.19);
-    const variation = (Math.random() * 2 - 1) * travel;
-    const gapCenter = clamp(targetY + variation, minCenter, maxCenter);
+    const playableRange = Math.max(1, maxCenter - minCenter);
+    const zoneCount = 4;
+
+    let gapCenter: number;
+
+    if (preferredCenter !== undefined) {
+      gapCenter = clamp(preferredCenter, minCenter, maxCenter);
+      this.lastGapZone = clamp(
+        Math.floor(((gapCenter - minCenter) / playableRange) * zoneCount),
+        0,
+        zoneCount - 1,
+      );
+    } else {
+      let zone = Math.floor(Math.random() * zoneCount);
+
+      if (zone === this.lastGapZone) {
+        zone = (zone + 1 + Math.floor(Math.random() * (zoneCount - 1))) % zoneCount;
+      }
+
+      const zoneStart = minCenter + (playableRange * zone) / zoneCount;
+      const zoneEnd = minCenter + (playableRange * (zone + 1)) / zoneCount;
+      gapCenter = randomBetween(zoneStart, zoneEnd);
+      this.lastGapZone = zone;
+    }
 
     this.pipes.push({
       x,
@@ -294,6 +320,10 @@ function roundedRect(
 ): void {
   context.beginPath();
   context.roundRect(x, y, width, height, radius);
+}
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
 }
 
 function clamp(value: number, min: number, max: number): number {
