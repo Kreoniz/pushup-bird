@@ -13,7 +13,7 @@ export interface GameFrame {
 }
 
 export class PushupBirdGame {
-  private readonly birdImage = new Image();
+  private readonly atlasImage = new Image();
   private pipes: PipePair[] = [];
   private score = 0;
   private running = false;
@@ -24,7 +24,7 @@ export class PushupBirdGame {
   private lastGapZone = -1;
 
   constructor() {
-    this.birdImage.src = new URL('assets/pushup-bird.svg', document.baseURI).href;
+    this.atlasImage.src = new URL('assets/game-atlas.webp', document.baseURI).href;
   }
 
   reset(width: number, height: number, player: ScreenPoint): void {
@@ -212,10 +212,51 @@ export class PushupBirdGame {
 
   private drawPipe(context: CanvasRenderingContext2D, pipe: PipePair): void {
     const width = this.getPipeWidth();
-    const capHeight = clamp(width * 0.24, 16, 28);
-    const capOverhang = clamp(width * 0.08, 6, 10);
     const gapTop = pipe.gapCenter - pipe.gapSize / 2;
     const gapBottom = pipe.gapCenter + pipe.gapSize / 2;
+
+    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
+      context.save();
+      context.shadowColor = 'rgba(0, 0, 0, 0.24)';
+      context.shadowBlur = 12;
+      context.drawImage(
+        this.atlasImage,
+        28,
+        114,
+        50,
+        65,
+        pipe.x,
+        0,
+        width,
+        gapTop,
+      );
+      context.drawImage(
+        this.atlasImage,
+        28,
+        204,
+        50,
+        69,
+        pipe.x,
+        gapBottom,
+        width,
+        this.height - gapBottom,
+      );
+      context.restore();
+      return;
+    }
+
+    this.drawFallbackPipe(context, pipe, gapTop, gapBottom, width);
+  }
+
+  private drawFallbackPipe(
+    context: CanvasRenderingContext2D,
+    pipe: PipePair,
+    gapTop: number,
+    gapBottom: number,
+    width: number,
+  ): void {
+    const capHeight = clamp(width * 0.24, 16, 28);
+    const capOverhang = clamp(width * 0.08, 6, 10);
     const gradient = context.createLinearGradient(pipe.x, 0, pipe.x + width, 0);
     gradient.addColorStop(0, '#2fc5aa');
     gradient.addColorStop(0.52, '#70efd0');
@@ -276,8 +317,19 @@ export class PushupBirdGame {
     context.shadowColor = 'rgba(0, 0, 0, 0.24)';
     context.shadowBlur = 12;
 
-    if (this.birdImage.complete && this.birdImage.naturalWidth > 0) {
-      context.drawImage(this.birdImage, -width * 0.5, -height * 0.5, width, height);
+    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
+      const frame = Math.floor(performance.now() / 120) % 3;
+      context.drawImage(
+        this.atlasImage,
+        1 + frame * 106,
+        1,
+        106,
+        106,
+        -width * 0.5,
+        -height * 0.5,
+        width,
+        height,
+      );
     } else {
       context.fillStyle = '#ffd248';
       context.beginPath();

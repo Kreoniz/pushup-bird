@@ -27,9 +27,10 @@ app.innerHTML = `
 
     <section class="overlay" id="intro-overlay">
       <div class="intro-card">
-        <div class="bird-mark" aria-hidden="true">↗</div>
+        <div class="app-icon" aria-hidden="true"></div>
         <p class="eyebrow">Body-controlled browser game</p>
-        <h1>Pushup<br />Bird</h1>
+        <div class="game-logo" role="img" aria-label="Pushup Bird"></div>
+        <h1 class="sr-only">Pushup Bird</h1>
         <p class="lede">Your nose controls the bird. Get low, push up, dodge the pipes.</p>
         <button class="primary-button" id="start-button" type="button">Enable camera</button>
         <p class="privacy-note">Video is processed on-device and is never uploaded by this app.</p>
