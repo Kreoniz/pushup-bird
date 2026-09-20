@@ -72,11 +72,7 @@ const readyCopy = getElement<HTMLElement>('ready-copy');
 const scoreElement = getElement<HTMLElement>('score');
 const gameOverScore = getElement<HTMLElement>('game-over-score');
 const bestScore = getElement<HTMLElement>('best-score');
-const context = canvas.getContext('2d');
-
-if (!context) {
-  throw new Error('Canvas is not supported in this browser.');
-}
+const context = getCanvasContext(canvas);
 
 const tracker = new PoseTracker();
 const smoother = new PointSmoother();
@@ -310,4 +306,14 @@ function getElement<T extends HTMLElement>(id: string): T {
   }
 
   return element as T;
+}
+
+function getCanvasContext(canvasElement: HTMLCanvasElement): CanvasRenderingContext2D {
+  const canvasContext = canvasElement.getContext('2d');
+
+  if (!canvasContext) {
+    throw new Error('Canvas is not supported in this browser.');
+  }
+
+  return canvasContext;
 }
