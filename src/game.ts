@@ -13,7 +13,7 @@ export interface GameFrame {
 }
 
 export class PushupBirdGame {
-  private readonly birdImage = new Image();
+  private readonly atlasImage = new Image();
   private pipes: PipePair[] = [];
   private score = 0;
   private running = false;
@@ -21,9 +21,10 @@ export class PushupBirdGame {
   private width = 0;
   private height = 0;
   private lastBird: ScreenPoint = { x: 0, y: 0 };
+  private lastGapZone = -1;
 
   constructor() {
-    this.birdImage.src = new URL('assets/pushup-bird.svg', document.baseURI).href;
+    this.atlasImage.src = new URL('assets/game-atlas.webp', document.baseURI).href;
   }
 
   reset(width: number, height: number, player: ScreenPoint): void {
@@ -33,14 +34,15 @@ export class PushupBirdGame {
     this.running = false;
     this.gameOver = false;
     this.pipes = [];
+    this.lastGapZone = -1;
     this.lastBird = this.getBirdPoint(player);
   }
 
   start(): void {
     this.running = true;
     this.gameOver = false;
-    this.spawnPipe(this.lastBird.y, this.width * 0.78);
-    this.spawnPipe(this.lastBird.y, this.width * 1.42);
+    this.spawnPipe(this.width * 0.78, this.lastBird.y);
+    this.spawnPipe(this.width * 1.42);
   }
 
   update(deltaSeconds: number, player: ScreenPoint, tracking: boolean): GameFrame {
@@ -66,7 +68,7 @@ export class PushupBirdGame {
 
     const lastPipe = this.pipes.at(-1);
     if (!lastPipe || lastPipe.x < this.width - this.getSpawnDistance()) {
-      this.spawnPipe(this.lastBird.y);
+      this.spawnPipe();
     }
 
     if (this.collides(this.lastBird)) {
@@ -111,14 +113,38 @@ export class PushupBirdGame {
     this.height = height;
   }
 
-  private spawnPipe(targetY: number, x = this.width + this.getPipeWidth()): void {
+  private spawnPipe(
+    x = this.width + this.getPipeWidth(),
+    preferredCenter?: number,
+  ): void {
     const gapSize = this.getGapSize();
     const safeMargin = Math.max(72, this.height * 0.09);
     const minCenter = safeMargin + gapSize / 2;
     const maxCenter = this.height - safeMargin - gapSize / 2;
-    const travel = Math.max(100, this.height * 0.19);
-    const variation = (Math.random() * 2 - 1) * travel;
-    const gapCenter = clamp(targetY + variation, minCenter, maxCenter);
+    const playableRange = Math.max(1, maxCenter - minCenter);
+    const zoneCount = 4;
+
+    let gapCenter: number;
+
+    if (preferredCenter !== undefined) {
+      gapCenter = clamp(preferredCenter, minCenter, maxCenter);
+      this.lastGapZone = clamp(
+        Math.floor(((gapCenter - minCenter) / playableRange) * zoneCount),
+        0,
+        zoneCount - 1,
+      );
+    } else {
+      let zone = Math.floor(Math.random() * zoneCount);
+
+      if (zone === this.lastGapZone) {
+        zone = (zone + 1 + Math.floor(Math.random() * (zoneCount - 1))) % zoneCount;
+      }
+
+      const zoneStart = minCenter + (playableRange * zone) / zoneCount;
+      const zoneEnd = minCenter + (playableRange * (zone + 1)) / zoneCount;
+      gapCenter = randomBetween(zoneStart, zoneEnd);
+      this.lastGapZone = zone;
+    }
 
     this.pipes.push({
       x,
@@ -186,10 +212,51 @@ export class PushupBirdGame {
 
   private drawPipe(context: CanvasRenderingContext2D, pipe: PipePair): void {
     const width = this.getPipeWidth();
-    const capHeight = clamp(width * 0.24, 16, 28);
-    const capOverhang = clamp(width * 0.08, 6, 10);
     const gapTop = pipe.gapCenter - pipe.gapSize / 2;
     const gapBottom = pipe.gapCenter + pipe.gapSize / 2;
+
+    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
+      context.save();
+      context.shadowColor = 'rgba(0, 0, 0, 0.24)';
+      context.shadowBlur = 12;
+      context.drawImage(
+        this.atlasImage,
+        28,
+        114,
+        50,
+        65,
+        pipe.x,
+        0,
+        width,
+        gapTop,
+      );
+      context.drawImage(
+        this.atlasImage,
+        28,
+        204,
+        50,
+        69,
+        pipe.x,
+        gapBottom,
+        width,
+        this.height - gapBottom,
+      );
+      context.restore();
+      return;
+    }
+
+    this.drawFallbackPipe(context, pipe, gapTop, gapBottom, width);
+  }
+
+  private drawFallbackPipe(
+    context: CanvasRenderingContext2D,
+    pipe: PipePair,
+    gapTop: number,
+    gapBottom: number,
+    width: number,
+  ): void {
+    const capHeight = clamp(width * 0.24, 16, 28);
+    const capOverhang = clamp(width * 0.08, 6, 10);
     const gradient = context.createLinearGradient(pipe.x, 0, pipe.x + width, 0);
     gradient.addColorStop(0, '#2fc5aa');
     gradient.addColorStop(0.52, '#70efd0');
@@ -250,8 +317,19 @@ export class PushupBirdGame {
     context.shadowColor = 'rgba(0, 0, 0, 0.24)';
     context.shadowBlur = 12;
 
-    if (this.birdImage.complete && this.birdImage.naturalWidth > 0) {
-      context.drawImage(this.birdImage, -width * 0.5, -height * 0.5, width, height);
+    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
+      const frame = Math.floor(performance.now() / 120) % 3;
+      context.drawImage(
+        this.atlasImage,
+        1 + frame * 106,
+        1,
+        106,
+        106,
+        -width * 0.5,
+        -height * 0.5,
+        width,
+        height,
+      );
     } else {
       context.fillStyle = '#ffd248';
       context.beginPath();
@@ -294,6 +372,10 @@ function roundedRect(
 ): void {
   context.beginPath();
   context.roundRect(x, y, width, height, radius);
+}
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
 }
 
 function clamp(value: number, min: number, max: number): number {
