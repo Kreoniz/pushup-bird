@@ -1,0 +1,19 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#071019"/>
+  <circle cx="985" cy="111" r="280" fill="#17483F" opacity="0.55"/>
+  <circle cx="106" cy="600" r="320" fill="#5B4218" opacity="0.4"/>
+  <rect x="713" y="-70" width="116" height="300" rx="28" fill="#65DCC9"/>
+  <rect x="713" y="400" width="116" height="300" rx="28" fill="#65DCC9"/>
+  <rect x="685" y="190" width="172" height="66" rx="24" fill="#65DCC9"/>
+  <rect x="685" y="374" width="172" height="66" rx="24" fill="#65DCC9"/>
+  <g transform="translate(690 264) scale(1.55)">
+    <path d="M0 42C0 16 19 0 46 0C71 0 88 14 91 36C94 55 80 70 57 72C31 76 9 67 3 52C1 49 0 45 0 42Z" fill="#FFD24B" stroke="#F8FBFF" stroke-width="4"/>
+    <ellipse cx="67" cy="25" rx="11" ry="12" fill="#F8FBFF" stroke="#071019" stroke-width="3"/>
+    <circle cx="70" cy="28" r="4" fill="#071019"/>
+    <path d="M87 34L108 39L89 46C85 42 84 38 87 34Z" fill="#FF7B55" stroke="#071019" stroke-width="3"/>
+    <path d="M23 5C35 0 50 0 64 5" stroke="#65DCC9" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <text x="92" y="250" fill="#65DCC9" font-family="Arial, sans-serif" font-size="32" font-weight="700" letter-spacing="5">BODY-CONTROLLED BROWSER GAME</text>
+  <text x="84" y="366" fill="#F8FBFF" font-family="Arial, sans-serif" font-size="112" font-weight="900" letter-spacing="-8">PUSHUP BIRD</text>
+  <text x="92" y="430" fill="#B7C5D0" font-family="Arial, sans-serif" font-size="34" font-weight="500">Your nose is the controller.</text>
+</svg>
