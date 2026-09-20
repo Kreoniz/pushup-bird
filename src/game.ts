@@ -13,7 +13,8 @@ export interface GameFrame {
 }
 
 export class PushupBirdGame {
-  private readonly atlasImage = new Image();
+  private readonly birdSpritesImage = new Image();
+  private readonly pipeImage = new Image();
   private pipes: PipePair[] = [];
   private score = 0;
   private running = false;
@@ -24,7 +25,8 @@ export class PushupBirdGame {
   private lastGapZone = -1;
 
   constructor() {
-    this.atlasImage.src = new URL('assets/game-atlas.webp', document.baseURI).href;
+    this.birdSpritesImage.src = new URL('assets/bird-sprites.webp', document.baseURI).href;
+    this.pipeImage.src = new URL('assets/pipe.webp', document.baseURI).href;
   }
 
   reset(width: number, height: number, player: ScreenPoint): void {
@@ -215,37 +217,87 @@ export class PushupBirdGame {
     const gapTop = pipe.gapCenter - pipe.gapSize / 2;
     const gapBottom = pipe.gapCenter + pipe.gapSize / 2;
 
-    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
-      context.save();
-      context.shadowColor = 'rgba(0, 0, 0, 0.24)';
-      context.shadowBlur = 12;
-      context.drawImage(
-        this.atlasImage,
-        28,
-        114,
-        50,
-        65,
-        pipe.x,
-        0,
-        width,
-        gapTop,
-      );
-      context.drawImage(
-        this.atlasImage,
-        28,
-        204,
-        50,
-        69,
-        pipe.x,
-        gapBottom,
-        width,
-        this.height - gapBottom,
-      );
-      context.restore();
+    if (this.pipeImage.complete && this.pipeImage.naturalWidth > 0) {
+      this.drawSlicedPipe(context, pipe.x, width, gapTop, gapBottom);
       return;
     }
 
     this.drawFallbackPipe(context, pipe, gapTop, gapBottom, width);
+  }
+
+  private drawSlicedPipe(
+    context: CanvasRenderingContext2D,
+    x: number,
+    width: number,
+    gapTop: number,
+    gapBottom: number,
+  ): void {
+    const shaftWidth = width * 0.87;
+    const shaftX = x + (width - shaftWidth) / 2;
+    const capHeight = width * 0.4;
+    const topShaftHeight = Math.max(0, gapTop - capHeight);
+    const bottomShaftY = gapBottom + capHeight;
+    const bottomShaftHeight = Math.max(0, this.height - bottomShaftY);
+
+    context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.shadowColor = 'rgba(0, 0, 0, 0.22)';
+    context.shadowBlur = 10;
+
+    if (topShaftHeight > 0) {
+      context.drawImage(
+        this.pipeImage,
+        159,
+        0,
+        194,
+        214,
+        shaftX,
+        0,
+        shaftWidth,
+        topShaftHeight,
+      );
+    }
+
+    context.drawImage(
+      this.pipeImage,
+      145,
+      215,
+      222,
+      89,
+      x,
+      gapTop - capHeight,
+      width,
+      capHeight,
+    );
+
+    context.drawImage(
+      this.pipeImage,
+      145,
+      448,
+      222,
+      97,
+      x,
+      gapBottom,
+      width,
+      capHeight,
+    );
+
+    if (bottomShaftHeight > 0) {
+      context.drawImage(
+        this.pipeImage,
+        159,
+        545,
+        194,
+        223,
+        shaftX,
+        bottomShaftY,
+        shaftWidth,
+        bottomShaftHeight,
+      );
+    }
+
+    context.restore();
   }
 
   private drawFallbackPipe(
@@ -308,27 +360,30 @@ export class PushupBirdGame {
 
   private drawBird(context: CanvasRenderingContext2D, bird: ScreenPoint): void {
     const radius = this.getBirdRadius();
-    const width = radius * 3.25;
-    const height = radius * 2.44;
+    const spriteSize = radius * 3.8;
 
     context.save();
     context.translate(bird.x, bird.y);
     context.rotate(-0.08);
     context.shadowColor = 'rgba(0, 0, 0, 0.24)';
     context.shadowBlur = 12;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
 
-    if (this.atlasImage.complete && this.atlasImage.naturalWidth > 0) {
+    if (this.birdSpritesImage.complete && this.birdSpritesImage.naturalWidth > 0) {
       const frame = Math.floor(performance.now() / 120) % 3;
+      const sourceSize = this.birdSpritesImage.naturalHeight;
+
       context.drawImage(
-        this.atlasImage,
-        1 + frame * 106,
-        1,
-        106,
-        106,
-        -width * 0.5,
-        -height * 0.5,
-        width,
-        height,
+        this.birdSpritesImage,
+        frame * sourceSize,
+        0,
+        sourceSize,
+        sourceSize,
+        -spriteSize * 0.5,
+        -spriteSize * 0.5,
+        spriteSize,
+        spriteSize,
       );
     } else {
       context.fillStyle = '#ffd248';
