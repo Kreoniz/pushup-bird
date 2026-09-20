@@ -29,14 +29,14 @@ app.innerHTML = `
       <div class="intro-card">
         <img
           class="app-icon"
-          src="\${import.meta.env.BASE_URL}assets/icon.webp"
+          src="${import.meta.env.BASE_URL}assets/icon.webp"
           alt=""
           aria-hidden="true"
         />
         <p class="eyebrow">Body-controlled browser game</p>
         <img
           class="game-logo"
-          src="\${import.meta.env.BASE_URL}assets/logo.webp"
+          src="${import.meta.env.BASE_URL}assets/logo.webp"
           alt="Pushup Bird"
         />
         <p class="lede">Your nose controls the bird. Get low, push up, dodge the pipes.</p>
